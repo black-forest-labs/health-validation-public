@@ -8,6 +8,7 @@ package app
 import (
 	"context"
 	"errors"
+	"os"
 	"slices"
 	"sync"
 
@@ -54,11 +55,15 @@ type nvmlHost struct {
 
 func newHostBackend() hostBackend {
 	b := nvml.New()
+	address, isSocket := dcgmEndpoint(os.Getenv)
 	h := &nvmlHost{
 		b:    b,
 		lazy: toolkit.LazyGPUBackend(func() (toolkit.MultiBackend, error) { return b, nil }),
-		// Legacy NVML read the driver live, so read DCGM live too.
-		dcgm: dcgmsource.NewStandaloneSource(dcgmsource.StandaloneOptions{LiveMetrics: true}),
+		// Legacy NVML read the driver live, so read DCGM live too. The
+		// hostengine is localhost unless HV_DCGM_ADDRESS names another.
+		dcgm: dcgmsource.NewStandaloneSource(dcgmsource.StandaloneOptions{
+			LiveMetrics: true, Address: address, IsSocket: isSocket,
+		}),
 	}
 	// The signal set is fixed, so New fails only on a programming error that
 	// the app tests catch; it records the watch without calling DCGM.
