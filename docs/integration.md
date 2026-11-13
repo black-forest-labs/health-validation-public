@@ -102,7 +102,10 @@ docker run --rm \
   `localhost` — required for `gpu_average_power_draw`, `gpu_power_limit`,
   `gpu_power_state`, `gpu_sensor_throttle`, and `nvlink_fabric`. Without them
   those checks
-  report a collection failure. The node must run `nv-hostengine`.
+  report a collection failure. The node must run `nv-hostengine`. To use a
+  hostengine elsewhere, set `HV_DCGM_ADDRESS` to its `host:port` (or
+  `unix:<path>` for a socket); the client library must be the same DCGM
+  version as that hostengine.
 - `--pid host` lets `gpu_compute_apps` see compute processes that other
   containers or the host run. NVML omits processes outside the caller's PID
   namespace, so without it a leftover process passes unnoticed.
@@ -199,7 +202,8 @@ the GPU checks:
 
 - `hostNetwork: true`, so the CLI reaches the node's DCGM hostengine on
   `localhost` (`gpu_average_power_draw`, `gpu_power_limit`, `gpu_power_state`,
-  `gpu_sensor_throttle`).
+  `gpu_sensor_throttle`). When DCGM runs in a pod instead (the GPU Operator's
+  `nvidia-dcgm`), set `HV_DCGM_ADDRESS` to that pod's `<ip>:5555`.
 - The host's `libdcgm.so.4`, and every non-glibc dependency reported by
   `ldd <host libdcgm.so.4 path>`, mounted read-only at the same paths, with
   `LD_LIBRARY_PATH` set to the library's directory. Pointing
